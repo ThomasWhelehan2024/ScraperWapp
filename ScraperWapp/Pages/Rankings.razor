@@ -1,0 +1,70 @@
+﻿@page "/rankings"
+@using ScraperWapp.Data
+@using ScraperWapp.Data.DTOS
+@using ScraperWapp.Orchestrators
+@inject DdgOrchestrator DdgOrchestrator
+
+<PageTitle>Duck Duck Go Results</PageTitle>
+
+<h1>Rankings</h1>
+
+
+@if (rankings == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col">
+            <h4>All Rankings</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>@nameof(RankingDto.Rank)</th>
+                        <th>@nameof(RankingDto.Url)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rank in rankings)
+                    {
+                        <tr>
+                            <td>@rank.Rank</td>
+                            <td>@rank.Url</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col">
+            <h4>InfoTrack Rankings</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>@nameof(RankingDto.Rank)</th>
+                        <th>@nameof(RankingDto.Url)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rank in rankings.Where(r => r.Url.Contains("infotrack.co.uk", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        <tr>
+                            <td>@rank.Rank</td>
+                            <td>@rank.Url</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private IList<RankingDto> rankings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rankings = await DdgOrchestrator.CollectResultsAsync();
+    }
+}
