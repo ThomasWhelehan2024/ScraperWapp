@@ -1,0 +1,41 @@
+﻿@page "/historical"
+@using ScraperWapp.Data
+@using ScraperWapp.Data.Database
+@using ScraperWapp.Data.DTOS
+@inject SearchResultRepository _repository
+
+<PageTitle>Historical</PageTitle>
+
+<h4>Infotrack.co.uk Ranking Over Time</h4>
+<p>This scatter plot shows the daily ranking of <strong>infotrack.co.uk</strong> in the top 100 DuckDuckGo search results for the query "land registry searches software" over the past month. Each point represents the rank on a given day, highlighting trends and fluctuations.</p>
+@if (_rankings != null)
+{
+    <RadzenChart>
+        <RadzenLineSeries StrokeWidth="0" LineType="LineType.Dashed" Smooth="@_smooth" Data="@_rankings" CategoryProperty="Date" Title="infotrack.co.uk" ValueProperty="Rank">
+            <RadzenMarkers Visible="@_showMarkers" MarkerType="MarkerType.Diamond" />
+            
+        </RadzenLineSeries>
+        <RadzenCategoryAxis Padding="20" />
+        <RadzenValueAxis>
+            <RadzenGridLines Visible="true" />
+            <RadzenAxisTitle Text="Ranking of infotrack.co.uk" />
+        </RadzenValueAxis>
+    </RadzenChart>
+}
+
+@code {
+    private IEnumerable<SearchResultDb> _rankings = new List<SearchResultDb>();
+ 
+
+    private bool _smooth = true;
+    private bool _showDataLabels = true;
+    private bool _showMarkers = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var historicalData = await _repository.GetHistoricalData("infotrack");
+        
+        _rankings = historicalData.AsEnumerable();
+        
+    }
+}

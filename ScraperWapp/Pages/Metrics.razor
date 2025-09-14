@@ -1,0 +1,45 @@
+﻿@page "/metrics"
+@using ScraperWapp.Data
+@using ScraperWapp.Data.Database
+@using ScraperWapp.Data.DTOS
+@inject SearchResultRepository _repository
+
+<PageTitle>Metrics</PageTitle>
+
+<h4>Top 10 Search Results Summary</h4>
+<p>The table below lists the top 10 search results over the past 28 days, showing each URL and its average ranking. This provides context on which sites consistently appear at the top and their relative performance.</p>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>@nameof(TopRankDto.Url)</th>
+        <th>@nameof(TopRankDto.AverageRank)</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var rank in _topRanks)
+    {
+        <tr>
+            <td>@rank.Url</td>
+            <td>@rank.AverageRank</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+
+
+@code {
+    
+    private IEnumerable<TopRankDto> _topRanks = new List<TopRankDto>();
+
+    private bool _smooth = true;
+    private bool _showDataLabels = true;
+    private bool _showMarkers = true;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var topRankData = await _repository.GetTopRanks(daysSince: 28, noOfResults: 10);
+        
+        _topRanks = topRankData.AsEnumerable();
+    }
+}

@@ -4,10 +4,10 @@
 @using ScraperWapp.Orchestrators
 @inject DdgOrchestrator DdgOrchestrator
 
-<PageTitle>Duck Duck Go Results</PageTitle>
+<PageTitle>Search Results</PageTitle>
 
-<h1>Rankings</h1>
-
+<h1>Web Scraper</h1>
+<p>View where <strong>infotrack.co.uk</strong> appears in the top 100 DuckDuckGo results for "land registry searches software" for today, along with all top 100 results and their type of result.</p>
 
 @if (rankings == null)
 {
@@ -17,47 +17,46 @@ else
 {
     <div class="row">
         <div class="col">
-            <h4>All Rankings</h4>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>@nameof(RankingDto.Rank)</th>
-                        <th>@nameof(RankingDto.Url)</th>
-                        <th>@nameof(RankingDto.Type)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var rank in rankings)
-                    {
-                        <tr>
-                            <td>@rank.Rank</td>
-                            <td>@rank.Url</td>
-                            <td>@rank.Type</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="col">
             <h4>InfoTrack Rankings</h4>
             <table class="table table-striped">
                 <thead>
-                    <tr>
-                        <th>@nameof(RankingDto.Rank)</th>
-                        <th>@nameof(RankingDto.Url)</th>
-                        <th>@nameof(RankingDto.Type)</th>
-                    </tr>
+                <tr>
+                    <th>@nameof(RankingDto.Rank)</th>
+                    <th>@nameof(RankingDto.Url)</th>
+                    <th>@nameof(RankingDto.Type)</th>
+                </tr>
                 </thead>
                 <tbody>
-                    @foreach (var rank in rankings.Where(r => r.Url.Contains("infotrack.co.uk", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        <tr>
-                            <td>@rank.Rank</td>
-                            <td>@rank.Url</td>
-                            <th>@rank.Type</th>
-                        </tr>
-                    }
+                @foreach (var rank in rankings.Where(r => r.Url.Contains("infotrack.co.uk", StringComparison.OrdinalIgnoreCase)))
+                {
+                    <tr>
+                        <td>@rank.Rank</td>
+                        <td>@rank.Url</td>
+                        <th>@rank.Type</th>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="col">
+            <h4>All Rankings</h4>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>@nameof(RankingDto.Rank)</th>
+                    <th>@nameof(RankingDto.Url)</th>
+                    <th>@nameof(RankingDto.Type)</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var rank in rankings)
+                {
+                    <tr>
+                        <td>@rank.Rank</td>
+                        <td>@rank.Url</td>
+                        <td>@rank.Type</td>
+                    </tr>
+                }
                 </tbody>
             </table>
         </div>
@@ -69,6 +68,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        rankings = await DdgOrchestrator.CollectResultsAsync();
+        
+        rankings = (await DdgOrchestrator.CollectResultsAsync()).OrderBy(r => r.Rank).ToList();
     }
 }
