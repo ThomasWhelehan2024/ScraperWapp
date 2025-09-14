@@ -1,7 +1,7 @@
 namespace ScraperWapp.Data.Database;
 
 
-public class SearchResultDb
+public class SearchResultDbModel
 {
     public int Id { get; set; }
     public int Rank { get; set; }

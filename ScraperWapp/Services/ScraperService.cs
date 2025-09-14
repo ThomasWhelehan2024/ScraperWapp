@@ -3,13 +3,13 @@ using System.Text.RegularExpressions;
 
 namespace ScraperWapp.Services
 {
-    public class ScraperService
+    public class ScraperService : IScraperService
     {
         public ScraperService()
         {
 
         }
-        public HtmlBlockDto? GetOuterHtml(string html, string startTag)
+        public HtmlBlockModel? GetOuterHtml(string html, string startTag)
         {
             var tagNameMatch = Regex.Match(startTag, @"<\s*(\w+)", RegexOptions.IgnoreCase);
 
@@ -35,7 +35,7 @@ namespace ScraperWapp.Services
                 int nextClose = html.IndexOf(closeTag, pos, StringComparison.OrdinalIgnoreCase);
 
                 if (nextClose == -1)
-                    return null; // malformed HTML
+                    return null; 
 
                 if (nextOpen != -1 && nextOpen < nextClose)
                 {
@@ -48,29 +48,27 @@ namespace ScraperWapp.Services
                     pos = nextClose + closeTag.Length;
                 }
             }
-
-            // Grab from the opening tag to the closing tag
-            return new HtmlBlockDto
+            
+            return new HtmlBlockModel
             {
                 Html = html.Substring(startIndex, pos - startIndex),
                 EndIndex = pos
             };
         }
 
-
-        public TagDto? FindTag(string html, string startTag)
+        public TagModel? FindTag(string html, string startTag)
         {
             int pos = 0;
 
             while (pos < html.Length)
             {
-                // Get the next <form> block
+                
                 var block = GetOuterHtml(html.Substring(pos), startTag);
                 if (block == null) break;
 
                 var metaFormAttributes = new List<string> { "q", "s","v","o"
                                                                  ,"dc","api","vqd" };
-                // Parse the form into a MetaForm object
+                
                 bool isMetaForm = ValidateForm(block.Html, metaFormAttributes);
 
                 if (isMetaForm)
@@ -79,13 +77,10 @@ namespace ScraperWapp.Services
                     return form;
                 }
 
-                // Check if this form matches the predicate
-
-
                 pos += block.EndIndex;
             }
 
-            return null; // No matching form found
+            return null;
         }
         public bool ValidateForm(string formHtml, IList<string> attributes)
         {
@@ -100,9 +95,9 @@ namespace ScraperWapp.Services
             return true;
         }
 
-        public TagDto ParseForm(string formHtml, IList<string> attributes)
+        public TagModel ParseForm(string formHtml, IList<string> attributes)
         {
-            var metaForm = new TagDto();
+            var metaForm = new TagModel();
 
             var splitForm = formHtml.Split(new[] { "<", ">" }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -122,7 +117,7 @@ namespace ScraperWapp.Services
                     var valueMatch = Regex.Match(inputMatch, @"value\s*=\s*[""']([^""']*)[""']", RegexOptions.IgnoreCase);
                     if (nameMatch.Success)
                     {
-                        metaForm.Inputs.Add(new MetaFormInputDto
+                        metaForm.Inputs.Add(new MetaFormInputModel
                         {
                             Name = nameMatch.Groups[1].Value,
                             Value = valueMatch.Success ? valueMatch.Groups[1].Value : null
@@ -131,7 +126,6 @@ namespace ScraperWapp.Services
                 }
             }
             return metaForm;
-
         }
 
         public IList<string> SplitRawEntries(string rawEntries, string pattern)
@@ -146,21 +140,15 @@ namespace ScraperWapp.Services
 
             foreach (Match match in matches)
             {
-                // start from the match onwards
                 string entry = rawEntries.Substring(match.Index);
-
-                // get the actual opening tag (could be div/ol/span/etc)
+                
                 string startTag = match.Value;
 
-                HtmlBlockDto block = GetOuterHtml(entry, startTag);
+                HtmlBlockModel block = GetOuterHtml(entry, startTag);
                 if (!string.IsNullOrWhiteSpace(block.Html))
                     results.Add(block.Html);
             }
-
             return results;
         }
-
-       
-        
     }
 }

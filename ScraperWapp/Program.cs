@@ -6,6 +6,8 @@ using System.Net;
 using Microsoft.EntityFrameworkCore;
 using ScraperWapp.Data;
 using Radzen;
+using ScraperWapp.BackEnd.Interfaces.Adapters;
+using ScraperWapp.BackEnd.Interfaces.Services;
 
 public class Program
 {
@@ -53,23 +55,22 @@ public class Program
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         });
 
-        builder.Services.AddScoped<DuckDuckGoClient>();
-        builder.Services.AddScoped<ScraperService>();
+        builder.Services.AddScoped<ISearchEngineClient,DuckDuckGoClient>();
+        builder.Services.AddScoped<IScraperService, ScraperService>();
+        builder.Services.AddScoped<IAnalysisService, AnalysisService>();
         builder.Services.AddScoped<DdgOrchestrator>();
         builder.Services.AddScoped<SearchResultRepository>();
-        builder.Services.AddScoped<AnalysisService>();
+        
 
         var app = builder.Build();
 
-        using (var scope = app.Services.CreateScope())
+        _ = Task.Run(async () =>
         {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.Migrate();
+            using var scope = app.Services.CreateScope();
+            var orchestrator = scope.ServiceProvider.GetRequiredService<DdgOrchestrator>();
+            await orchestrator.SeedResultsAsync();
+        });
 
-            // Seed from orchestrator
-            await scope.ServiceProvider.GetRequiredService<DdgOrchestrator>()
-                                       .SeedResultsAsync();
-        }
 
         if (!app.Environment.IsDevelopment())
         {

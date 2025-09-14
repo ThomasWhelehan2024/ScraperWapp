@@ -5,7 +5,18 @@ using Serilog;
 
 namespace ScraperWapp.Data;
 
-public class SearchResultRepository
+public interface ISearchResultRepository
+{
+    Task<List<SearchResultDbModel>> GetByUrl(DateTime date);
+    Task<List<SearchResultDbModel>> GetByUrl(string url);
+    Task<List<TopRankModel>> GetTopRanks(int daysSince, int noOfResults);
+    Task AddData(IList<SearchResultDbModel> searchResults);
+    Task RemoveData();
+    Task<List<SearchResultDbModel>> GetByDate(DateTime date);
+    Task<List<SearchResultDbModel>> GetHistoricalData(string url);
+}
+
+public class SearchResultRepository : ISearchResultRepository
 {
     private readonly AppDbContext _db;
 
@@ -13,30 +24,30 @@ public class SearchResultRepository
     {
         _db = db;
     }
-
-    public async Task<List<SearchResultDb>> GetByUrl(DateTime date)
+    
+    public async Task<List<SearchResultDbModel>> GetByUrl(DateTime date)
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
 
         return await query.Where(entry =>
             entry.Date.Date == date.Date).ToListAsync();
     }
 
-    public async Task<List<SearchResultDb>> GetByUrl(string url)
+    public async Task<List<SearchResultDbModel>> GetByUrl(string url)
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
 
         return await query.Where(entry => url.Contains(entry.Url)).ToListAsync();
     }
 
     
-    public async Task<List<TopRankDto>> GetTopRanks(int daysSince, int noOfResults)
+    public async Task<List<TopRankModel>> GetTopRanks(int daysSince, int noOfResults)
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
 
         var result = await query.Where(entry => entry.Date.Date >= DateTime.Today.Date.AddDays(-daysSince))
             .GroupBy(entry => entry.Url)
-            .Select(g => new TopRankDto
+            .Select(g => new TopRankModel
             {
                 Url = g.Key,
                 AverageRank = g.Average(entry => entry.Rank),
@@ -46,9 +57,9 @@ public class SearchResultRepository
             .ToListAsync();
         return result;
     }
-    public async Task AddData(IList<SearchResultDb> searchResults)
+    public async Task AddData(IList<SearchResultDbModel> searchResults)
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
 
         try
         {
@@ -63,7 +74,7 @@ public class SearchResultRepository
 
     public async Task RemoveData()
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
 
         var data = await _db.SearchResults.Where(entry => entry.Date.Date < DateTime.Today.Date).ToListAsync();
         try
@@ -76,17 +87,17 @@ public class SearchResultRepository
             Log.Error("Could not remove search results");
         }
     }
-    public async Task<List<SearchResultDb>> GetByDate(DateTime date)
+    public async Task<List<SearchResultDbModel>> GetByDate(DateTime date)
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
         
         return await query.Where(entry => entry.Date.Date == date.Date)
                           .ToListAsync();
     }
 
-    public async Task<List<SearchResultDb>> GetHistoricalData(string url)
+    public async Task<List<SearchResultDbModel>> GetHistoricalData(string url)
     {
-        IQueryable<SearchResultDb> query = _db.SearchResults.AsNoTracking();
+        IQueryable<SearchResultDbModel> query = _db.SearchResults.AsNoTracking();
         
         return await query.Where(entry => entry.Url.Contains(url))
             .ToListAsync();

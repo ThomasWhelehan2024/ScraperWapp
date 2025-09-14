@@ -1,4 +1,5 @@
 ﻿@page "/rankings"
+@using ScraperWapp.BackEnd.Models
 @using ScraperWapp.Data
 @using ScraperWapp.Data.DTOS
 @using ScraperWapp.Orchestrators
@@ -21,9 +22,9 @@ else
             <table class="table table-striped">
                 <thead>
                 <tr>
-                    <th>@nameof(RankingDto.Rank)</th>
-                    <th>@nameof(RankingDto.Url)</th>
-                    <th>@nameof(RankingDto.Type)</th>
+                    <th>@nameof(RankingModel.Rank)</th>
+                    <th>@nameof(RankingModel.Url)</th>
+                    <th>@nameof(RankingModel.Type)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -43,9 +44,9 @@ else
             <table class="table">
                 <thead>
                 <tr>
-                    <th>@nameof(RankingDto.Rank)</th>
-                    <th>@nameof(RankingDto.Url)</th>
-                    <th>@nameof(RankingDto.Type)</th>
+                    <th>@nameof(RankingModel.Rank)</th>
+                    <th>@nameof(RankingModel.Url)</th>
+                    <th>@nameof(RankingModel.Type)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -64,7 +65,7 @@ else
 }
 
 @code {
-    private IList<RankingDto> rankings;
+    private IList<IRankingModel> rankings;
 
     protected override async Task OnInitializedAsync()
     {

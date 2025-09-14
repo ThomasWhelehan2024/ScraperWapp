@@ -1,16 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc.Routing;
+using ScraperWapp.BackEnd.Interfaces.Adapters;
 using ScraperWapp.Data.DTOS;
 using ScraperWapp.Helpers;
 using ScraperWapp.Services;
 
 namespace ScraperWapp.Adapter
 {
-    public class DuckDuckGoClient
+    public class DuckDuckGoClient : ISearchEngineClient
     {
         private readonly HttpClient _httpClient;
-        private readonly ScraperService _scrapingService;
+        private readonly IScraperService _scrapingService;
 
-        public DuckDuckGoClient(IHttpClientFactory httpClientFactory, ScraperService scrapingService)
+        public DuckDuckGoClient(IHttpClientFactory httpClientFactory, IScraperService scrapingService)
         {
             _scrapingService = scrapingService;
             _httpClient = httpClientFactory.CreateClient();
@@ -19,7 +20,7 @@ namespace ScraperWapp.Adapter
             _httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-GB,en;q=0.9");
         }
 
-        public async Task<string> GetHtmlAsync(string url, TagDto? form = null)
+        public async Task<string> GetHtmlAsync(string url, ITagModel? form = null)
         {
             HttpResponseMessage response;
             if (form != null)

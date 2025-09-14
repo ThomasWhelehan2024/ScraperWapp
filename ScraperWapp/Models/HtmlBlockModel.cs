@@ -1,6 +1,6 @@
 ﻿namespace ScraperWapp.Data.DTOS
 {
-    public class HtmlBlockDto
+    public class HtmlBlockModel : IHtmlBlockModel
     {
         public string Html { get; set; }
         public int EndIndex { get; set; }

@@ -21,7 +21,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
+    <_ContentIncludedByDefault Remove="Pages\Error.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\_Host.cshtml" />
+    <_ContentIncludedByDefault Remove="Pages\Historical.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Index.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Metrics.razor" />
+    <_ContentIncludedByDefault Remove="Pages\Rankings.razor" />
+    <_ContentIncludedByDefault Remove="Shared\MainLayout.razor" />
+    <_ContentIncludedByDefault Remove="Shared\NavMenu.razor" />
+    <_ContentIncludedByDefault Remove="Shared\SurveyPrompt.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Pages\Error.cshtml" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Pages\_Host.cshtml" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Pages\Historical.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Pages\Index.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Pages\Metrics.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Pages\Rankings.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Shared\MainLayout.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Shared\NavMenu.razor" />
+    <_ContentIncludedByDefault Remove="FrontEnd\Shared\SurveyPrompt.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Pages\Error.cshtml" />
+    <AdditionalFiles Include="Pages\Index.razor" />
+    <AdditionalFiles Include="Pages\Rankings.razor" />
+    <AdditionalFiles Include="Pages\_Host.cshtml" />
+    <AdditionalFiles Include="Shared\MainLayout.razor" />
+    <AdditionalFiles Include="Shared\NavMenu.razor" />
+    <AdditionalFiles Include="Shared\SurveyPrompt.razor" />
   </ItemGroup>
 
 </Project>

@@ -7,7 +7,7 @@ namespace ScraperWapp.Data;
 
 public class AppDbContext : DbContext
 {
-    public DbSet<SearchResultDb> SearchResults { get; set; }
+    public DbSet<SearchResultDbModel> SearchResults { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -34,8 +34,8 @@ public class AppDbContext : DbContext
                 string type = columns[2];
                 DateTime date = DateTime.Parse(columns[3], CultureInfo.InvariantCulture);
 
-                modelBuilder.Entity<SearchResultDb>().HasData(
-                    new SearchResultDb
+                modelBuilder.Entity<SearchResultDbModel>().HasData(
+                    new SearchResultDbModel
                     {
                         Id = idCounter++,
                         Rank = rank,

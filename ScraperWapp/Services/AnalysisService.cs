@@ -1,23 +1,28 @@
-﻿using ScraperWapp.Data.DTOS;
+﻿using ScraperWapp.BackEnd.Interfaces.Services;
+using ScraperWapp.BackEnd.Models;
+using ScraperWapp.Data.DTOS;
+using ScraperWapp.Orchestrators;
 
 namespace ScraperWapp.Services
 {
-    public class AnalysisService
+    public class AnalysisService : IAnalysisService
     {
-        private readonly ScraperService _scraperService;
-        public AnalysisService(ScraperService scraperService)
+        private readonly IScraperService _scraperService;
+        private readonly ILogger<AnalysisService> _logger;
+        public AnalysisService(IScraperService scraperService, ILogger<AnalysisService> logger)
         {
             _scraperService = scraperService;
+            _logger = logger;
         }
 
-        public IList<RankingDto> GetRankings(IList<string> entries)
+        public IList<IRankingModel> GetRankings(IList<string> entries)
         {
-            var results = new List<RankingDto>();
+            IList<IRankingModel> results = new List<IRankingModel>();
             try
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
-                    RankingDto result = new RankingDto();
+                    IRankingModel result = new RankingModel();
                     var html = entries[i];
                     if (html.Contains("result--ad"))
                     {
@@ -46,12 +51,12 @@ namespace ScraperWapp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error analyzing results: {ex.Message}");
-                return new List<RankingDto>();
+                _logger.LogInformation($"Error analyzing results: {ex.Message}");
+                return new List<IRankingModel>();
             }
         }
-
-        public IList<RankingDto> GetMatchingRankings(IList<RankingDto> rankings, string domain)
+        
+        public IList<IRankingModel> GetMatchingRankings(IList<IRankingModel> rankings, string domain)
         {
             return rankings.Where(r => r.Url.Contains(domain, StringComparison.OrdinalIgnoreCase)).ToList();
         }

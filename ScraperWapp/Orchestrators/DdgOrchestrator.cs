@@ -1,22 +1,22 @@
-﻿using ScraperWapp.Adapter;
-using ScraperWapp.Data.DTOS;
-using ScraperWapp.Services;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using ScraperWapp.Services;
+using ScraperWapp.BackEnd.Interfaces.Adapters;
+using ScraperWapp.BackEnd.Interfaces.Services;
+using ScraperWapp.BackEnd.Models;
 using ScraperWapp.Data;
 using ScraperWapp.Data.Database;
 
 namespace ScraperWapp.Orchestrators
 {
-    public class DdgOrchestrator
+    public class DdgOrchestrator : IOrchestrator
     {
-        private readonly DuckDuckGoClient _ddgClient;
-        private readonly ScraperService _scrapingService;
-        private readonly AnalysisService _analysisService;
+        private readonly ISearchEngineClient _ddgClient;
+        private readonly IScraperService _scrapingService;
+        private readonly IAnalysisService _analysisService;
         private readonly SearchResultRepository _searchResultRepository;
+        private readonly ILogger<DdgOrchestrator> _logger;
 
-        public DdgOrchestrator(DuckDuckGoClient ddgClient, ScraperService scrapingService,
-            AnalysisService analysisService, SearchResultRepository searchResultRepository)
+        public DdgOrchestrator(ISearchEngineClient ddgClient, IScraperService scrapingService,
+            IAnalysisService analysisService, SearchResultRepository searchResultRepository)
         {
             _ddgClient = ddgClient;
             _scrapingService = scrapingService;
@@ -24,25 +24,26 @@ namespace ScraperWapp.Orchestrators
             _searchResultRepository = searchResultRepository;
         }
 
-        public async Task<IList<RankingDto>> CollectResultsAsync()
+        
+        public async Task<IList<IRankingModel>> CollectResultsAsync()
         {
-            IList<SearchResultDb> todaysResults = new List<SearchResultDb>();
+            IList<SearchResultDbModel> todaysResults = new List<SearchResultDbModel>();
             todaysResults = await _searchResultRepository.GetByDate(DateTime.Today);
 
             if (todaysResults.Any())
             {
-                return todaysResults.Select(r => new RankingDto
+                IList<IRankingModel> results = todaysResults.Select(r => (IRankingModel)new RankingModel
                 {
                     Type = r.Type,
                     Rank = r.Rank,
                     Url = r.Url,
                 }).OrderByDescending(r => r.Rank).ToList();
+                return results;
             }
 
             var pages = await _ddgClient.FetchPagesAsync("https://duckduckgo.com/html/");
 
             string startDiv = "<div class=\"serp__results\">";
-            string metaDataDiv = @"<form action=""/html/"" method=""post"">";
 
             List<string> entries = new List<string>();
 
@@ -59,7 +60,7 @@ namespace ScraperWapp.Orchestrators
 
             var rankings = _analysisService.GetRankings(entries);
 
-            await _searchResultRepository.AddData(rankings.Select(r => new SearchResultDb
+            await _searchResultRepository.AddData(rankings.Select(r => new SearchResultDbModel
             {
                 Type = r.Type,
                 Rank = r.Rank,
@@ -73,7 +74,7 @@ namespace ScraperWapp.Orchestrators
         public async Task SeedResultsAsync()
         {
             DateTime startDate = DateTime.Today.AddDays(-20);
-            IList<SearchResultDb> searchResults = new List<SearchResultDb>();
+            IList<SearchResultDbModel> searchResults = new List<SearchResultDbModel>();
             var results = await _searchResultRepository.GetByDate(startDate);
             if (!results.Any())
             {
@@ -86,7 +87,7 @@ namespace ScraperWapp.Orchestrators
                         var columns = line.Split(',');
                         if (columns.Length == 4)
                         {
-                            searchResults.Add(new SearchResultDb
+                            searchResults.Add(new SearchResultDbModel
                             {
                                 Rank = int.Parse(columns[0]),
                                 Url = columns[1],
@@ -96,10 +97,11 @@ namespace ScraperWapp.Orchestrators
                         }
                     }
 
-                    if (searchResults.Any())
+                    if (!searchResults.Any())
                     {
-                        await _searchResultRepository.AddData(searchResults);
+                        _logger.LogInformation("No results found");
                     }
+                    else{ await _searchResultRepository.AddData(searchResults);}
                 }
             }
         }

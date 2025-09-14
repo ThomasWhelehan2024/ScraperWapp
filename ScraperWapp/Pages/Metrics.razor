@@ -11,8 +11,8 @@
 <table class="table table-striped">
     <thead>
     <tr>
-        <th>@nameof(TopRankDto.Url)</th>
-        <th>@nameof(TopRankDto.AverageRank)</th>
+        <th>@nameof(TopRankModel.Url)</th>
+        <th>@nameof(TopRankModel.AverageRank)</th>
     </tr>
     </thead>
     <tbody>
@@ -30,7 +30,7 @@
 
 @code {
     
-    private IEnumerable<TopRankDto> _topRanks = new List<TopRankDto>();
+    private IEnumerable<TopRankModel> _topRanks = new List<TopRankModel>();
 
     private bool _smooth = true;
     private bool _showDataLabels = true;
