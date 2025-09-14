@@ -58,7 +58,7 @@ namespace ScraperWapp.Services
         }
 
 
-        public TagDto? FindTag(string html, string startTag, Func<TagDto, bool> predicate)
+        public TagDto? FindTag(string html, string startTag)
         {
             int pos = 0;
 
@@ -68,19 +68,70 @@ namespace ScraperWapp.Services
                 var block = GetOuterHtml(html.Substring(pos), startTag);
                 if (block == null) break;
 
+                var metaFormAttributes = new List<string> { "q", "s","v","o"
+                                                                 ,"dc","api","vqd" };
                 // Parse the form into a MetaForm object
-                var form = ParseForm(block.Html);
+                bool isMetaForm = ValidateForm(block.Html, metaFormAttributes);
+
+                if (isMetaForm)
+                {
+                    var form = ParseForm(block.Html, metaFormAttributes);
+                    return form;
+                }
 
                 // Check if this form matches the predicate
-                if (predicate(form))
-                {
-                    return form; // Found the one we want
-                }
+
 
                 pos += block.EndIndex;
             }
 
             return null; // No matching form found
+        }
+        public bool ValidateForm(string formHtml, IList<string> attributes)
+        {
+            foreach (var attr in attributes)
+            {
+                if (formHtml.Contains($"name=\"{attr}\""))
+                {
+                    continue;
+                }
+                else { return false; }
+            }
+            return true;
+        }
+
+        public TagDto ParseForm(string formHtml, IList<string> attributes)
+        {
+            var metaForm = new TagDto();
+
+            var splitForm = formHtml.Split(new[] { "<", ">" }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (splitForm.Length == 0)
+                return metaForm;
+
+
+            metaForm.Action = Regex.Match(splitForm[0], @"action\s*=\s*[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+            metaForm.Method = Regex.Match(splitForm[0], @"method\s*=\s*[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+
+            foreach (var att in attributes)
+            {
+                var inputMatch = splitForm.FirstOrDefault(s => s.Contains($"name=\"{att}\""));
+                if (inputMatch != null)
+                {
+                    var nameMatch = Regex.Match(inputMatch, @"name\s*=\s*[""']([^""']+)[""']", RegexOptions.IgnoreCase);
+                    var valueMatch = Regex.Match(inputMatch, @"value\s*=\s*[""']([^""']*)[""']", RegexOptions.IgnoreCase);
+                    if (nameMatch.Success)
+                    {
+                        metaForm.Inputs.Add(new MetaFormInputDto
+                        {
+                            Name = nameMatch.Groups[1].Value,
+                            Value = valueMatch.Success ? valueMatch.Groups[1].Value : null
+                        });
+                    }
+                }
+            }
+            return metaForm;
+
         }
 
         public IList<string> SplitRawEntries(string rawEntries, string pattern)
@@ -109,37 +160,7 @@ namespace ScraperWapp.Services
             return results;
         }
 
-        public TagDto ParseForm(string formHtml)
-        {
-            var metaForm = new TagDto();
-
-            var formMatch = Regex.Match(
-                formHtml,
-                @"<form[^>]*action\s*=\s*[""']([^""']+)[""'][^>]*method\s*=\s*[""']([^""']+)[""']",
-                RegexOptions.IgnoreCase
-            );
-
-            if (formMatch.Success)
-            {
-                metaForm.Action = formMatch.Groups[1].Value;
-                metaForm.Method = formMatch.Groups[2].Value;
-            }
-
-            var inputMatches = Regex.Matches(
-                formHtml,
-                @"<input\b[^>]*name\s*=\s*[""']([^""']+)[""'][^>]*value\s*=\s*[""']([^""']*)[""'][^>]*>",
-                RegexOptions.IgnoreCase
-            );
-
-            foreach (Match match in inputMatches)
-            {
-                metaForm.Inputs.Add(new MetaFormInputDto
-                {
-                    Name = match.Groups[1].Value,
-                    Value = match.Groups[2].Value
-                });
-            }
-            return metaForm;
-        }
+       
+        
     }
 }

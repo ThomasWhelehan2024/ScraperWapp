@@ -17,7 +17,13 @@ namespace ScraperWapp.Services
             {
                 for (int i = 0; i < entries.Count; i++)
                 {
+                    RankingDto result = new RankingDto();
                     var html = entries[i];
+                    if (html.Contains("result--ad"))
+                    {
+                        result.Type = "Advert";
+                    }
+
                     var tag = _scraperService.GetOuterHtml(html, "<a class=\"result__url\"");
 
                     if (tag == null)
@@ -32,7 +38,9 @@ namespace ScraperWapp.Services
 
                     var visibleText = tag.Html.Substring(start, end - start).Trim();
 
-                    results.Add(new RankingDto { Rank = i + 1, Url = visibleText });
+                    result.Rank = i + 1;
+                    result.Url = visibleText;
+                    results.Add(result);
                 }
                 return results;
             }

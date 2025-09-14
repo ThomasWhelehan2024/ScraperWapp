@@ -1,16 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc.Routing;
-using ScraperWapp.Data.DTOS;
-using ScraperWapp.Helpers;
+﻿using ScraperWapp.Data.DTOS;
 using ScraperWapp.Services;
 
 namespace ScraperWapp.Adapter
 {
-    public class DuckDuckGoClient
+    public class BingClient
     {
         private readonly HttpClient _httpClient;
         private readonly ScraperService _scrapingService;
 
-        public DuckDuckGoClient(IHttpClientFactory httpClientFactory, ScraperService scrapingService)
+        public BingClient(IHttpClientFactory httpClientFactory, ScraperService scrapingService)
         {
             _scrapingService = scrapingService;
             _httpClient = httpClientFactory.CreateClient();
@@ -24,15 +22,11 @@ namespace ScraperWapp.Adapter
             HttpResponseMessage response;
             if (form != null)
             {
-                var inputDictionary = form.Inputs.ToDictionary(i => i.Name, i => i.Value ?? "");
-
-                url = CustomUrlHelper.BuildGetUrl(url, inputDictionary);
-                response = await _httpClient.GetAsync(url);
+                var formData = new FormUrlEncodedContent(form.Inputs.ToDictionary(i => i.Name, i => i.Value ?? ""));
+                response = await _httpClient.PostAsync(url, formData);
             }
             else
             {
-                var inputDictionary = new Dictionary<string, string> { { "q", "land registry searches software" } };
-                url = CustomUrlHelper.BuildGetUrl(url, inputDictionary);
                 response = await _httpClient.GetAsync(url);
             }
             response.EnsureSuccessStatusCode();
@@ -55,9 +49,7 @@ namespace ScraperWapp.Adapter
             int pageOffset = pageMetaData.Inputs.Where(i => i.Name == "s")
                                                 .Select(pageMetaData => int.TryParse(pageMetaData.Value, out var s) ? s : 0)
                                                 .FirstOrDefault();
-            int dcOffset = pageMetaData.Inputs.Where(i => i.Name == "dc")
-                                                .Select(pageMetaData => int.TryParse(pageMetaData.Value, out var dc) ? dc : 0)
-                                                .FirstOrDefault();
+
 
             while (pageOffset <= 101)
             {
@@ -65,19 +57,16 @@ namespace ScraperWapp.Adapter
                 if (sInput != null)
                     sInput.Value = pageOffset.ToString();
 
-                var dcInput = pageMetaData.Inputs.FirstOrDefault(i => i.Name == "dc");
-                if (dcInput != null)
-                    dcInput.Value = dcOffset.ToString();
-
 
                 html = await GetHtmlAsync(url, pageMetaData);
                 pagesHtml.Add(html);
 
+                pageMetaData = _scrapingService.FindTag(html, "<form");
+
                 if (pageMetaData == null)
                     break;
 
-                pageOffset += 15;
-                dcOffset += 17;
+                pageOffset += 10;
 
                 // Wait 1–2 seconds to avoid bot detection
                 await Task.Delay(Random.Shared.Next(2000, 5000));
