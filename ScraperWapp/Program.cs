@@ -64,9 +64,6 @@ public class Program
         }
 
         
-
-
-        // --- Configure middleware ---
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error");
