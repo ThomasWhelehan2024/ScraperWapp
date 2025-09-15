@@ -12,23 +12,23 @@ namespace ScraperWapp.Orchestrators
         private readonly ISearchEngineClient _ddgClient;
         private readonly IScraperService _scrapingService;
         private readonly IAnalysisService _analysisService;
-        private readonly SearchResultRepository _searchResultRepository;
+        private readonly SearchResultStore _searchResultStore;
         private readonly ILogger<DdgOrchestrator> _logger;
 
         public DdgOrchestrator(ISearchEngineClient ddgClient, IScraperService scrapingService,
-            IAnalysisService analysisService, SearchResultRepository searchResultRepository)
+            IAnalysisService analysisService, SearchResultStore searchResultStore)
         {
             _ddgClient = ddgClient;
             _scrapingService = scrapingService;
             _analysisService = analysisService;
-            _searchResultRepository = searchResultRepository;
+            _searchResultStore = searchResultStore;
         }
 
         
         public async Task<IList<IRankingModel>> CollectResultsAsync()
         {
             IList<SearchResultDbModel> todaysResults = new List<SearchResultDbModel>();
-            todaysResults = await _searchResultRepository.GetByDate(DateTime.Today);
+            todaysResults = _searchResultStore.GetByDate(DateTime.Today);
 
             if (todaysResults.Any())
             {
@@ -60,7 +60,7 @@ namespace ScraperWapp.Orchestrators
 
             var rankings = _analysisService.GetRankings(entries);
 
-            await _searchResultRepository.AddData(rankings.Select(r => new SearchResultDbModel
+            _searchResultStore.AddData(rankings.Select(r => new SearchResultDbModel
             {
                 Type = r.Type,
                 Rank = r.Rank,
@@ -71,57 +71,8 @@ namespace ScraperWapp.Orchestrators
             return rankings;
         }
 
-        public async Task SeedResultsAsync()
-        {
-            DateTime startDate = DateTime.Today.AddDays(-20);
-            IList<SearchResultDbModel> searchResults = new List<SearchResultDbModel>();
-            var results = await _searchResultRepository.GetByDate(startDate);
-            if (!results.Any())
-            {
-                var csvPath = Path.Combine(AppContext.BaseDirectory, "land_registry_searches_4week.csv");
-                if (File.Exists(csvPath))
-                {
-                    int idCounter = 1;
-                    foreach (var line in File.ReadLines(csvPath).Skip(1))
-                    {
-                        var columns = line.Split(',');
-                        if (columns.Length == 4 && 
-                            int.TryParse(columns[0], out int rank) &&
-                            DateTime.TryParse(columns[3], out DateTime date))
-                        {
-                            searchResults.Add(new SearchResultDbModel
-                            {
-                                Rank = int.Parse(columns[0]),
-                                Url = columns[1],
-                                Type = columns[2],
-                                Date = date
-                            });
-                        }
-                    }
-
-                    if (!searchResults.Any())
-                    {
-                        _logger.LogInformation("No results found");
-                        throw new Exception("No data found in CSV file");
-                    }
-                    else { 
-                        try 
-                        {
-                            await _searchResultRepository.AddData(searchResults);
-                        }                       
-                        catch(Exception ex)
-                        {
-                           throw new Exception("Error", ex);
-                        } 
-                    }
-                    
-                }
-                else
-                {
-                    throw new FileNotFoundException("CSV file not found", csvPath);
-                }
-            }
-        }
+        
     }
 }
+   
 
