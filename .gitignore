@@ -80,6 +80,7 @@ StyleCopReport.xml
 *.pch
 *.pdb
 *.ipdb
+<<<<<<< Updated upstream
 *.pgc
 *.pgd
 *.rsp
@@ -87,6 +88,24 @@ StyleCopReport.xml
 *.tlb
 *.tli
 *.tlh
+=======
+*.idb
+
+## Ignore Rider / JetBrains IDE files
+.idea/
+*.sln.iml
+
+## Ignore Visual Studio Code settings
+.vscode/
+
+## Ignore NuGet packages
+*.nupkg
+packages/
+.nuget/
+
+
+# Ignore temporary files
+>>>>>>> Stashed changes
 *.tmp
 *.tmp_proj
 *_wpftmp.csproj
@@ -361,3 +380,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/ScraperWapp/publish.zip
