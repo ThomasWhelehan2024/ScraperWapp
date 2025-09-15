@@ -2,7 +2,7 @@
 @using ScraperWapp.Data
 @using ScraperWapp.Data.Database
 @using ScraperWapp.Data.DTOS
-@inject SearchResultRepository _repository
+@inject SearchResultStore _store
 
 <PageTitle>Metrics</PageTitle>
 
@@ -36,9 +36,9 @@
     private bool _showDataLabels = true;
     private bool _showMarkers = true;
     
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        var topRankData = await _repository.GetTopRanks(daysSince: 28, noOfResults: 10);
+        var topRankData = _store.GetTopRanks(daysSince: 28, noOfResults: 10);
         
         _topRanks = topRankData.AsEnumerable();
     }

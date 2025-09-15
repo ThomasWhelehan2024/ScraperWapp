@@ -6,5 +6,4 @@ namespace ScraperWapp.Orchestrators;
 public interface IOrchestrator
 {
     Task<IList<IRankingModel>> CollectResultsAsync();
-    Task SeedResultsAsync();
 }

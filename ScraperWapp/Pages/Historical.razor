@@ -2,7 +2,7 @@
 @using ScraperWapp.Data
 @using ScraperWapp.Data.Database
 @using ScraperWapp.Data.DTOS
-@inject SearchResultRepository _repository
+@inject SearchResultStore _store
 
 <PageTitle>Historical</PageTitle>
 
@@ -13,7 +13,6 @@
     <RadzenChart>
         <RadzenLineSeries StrokeWidth="0" LineType="LineType.Dashed" Smooth="@_smooth" Data="@_rankings" CategoryProperty="Date" Title="infotrack.co.uk" ValueProperty="Rank">
             <RadzenMarkers Visible="@_showMarkers" MarkerType="MarkerType.Diamond" />
-            
         </RadzenLineSeries>
         <RadzenCategoryAxis Padding="20" />
         <RadzenValueAxis>
@@ -31,9 +30,9 @@
     private bool _showDataLabels = true;
     private bool _showMarkers = true;
     
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        var historicalData = await _repository.GetHistoricalData("infotrack");
+        var historicalData = _store.GetHistoricalData("infotrack");
         
         _rankings = historicalData.AsEnumerable();
         
