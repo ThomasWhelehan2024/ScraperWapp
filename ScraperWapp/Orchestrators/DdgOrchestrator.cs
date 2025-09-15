@@ -78,21 +78,23 @@ namespace ScraperWapp.Orchestrators
             var results = await _searchResultRepository.GetByDate(startDate);
             if (!results.Any())
             {
-                var csvPath = Path.Combine(AppContext.BaseDirectory, "land_registry_searches_30days.csv");
+                var csvPath = Path.Combine(AppContext.BaseDirectory, "land_registry_searches_4week.csv");
                 if (File.Exists(csvPath))
                 {
                     int idCounter = 1;
                     foreach (var line in File.ReadLines(csvPath).Skip(1))
                     {
                         var columns = line.Split(',');
-                        if (columns.Length == 4)
+                        if (columns.Length == 4 && 
+                            int.TryParse(columns[0], out int rank) &&
+                            DateTime.TryParse(columns[3], out DateTime date))
                         {
                             searchResults.Add(new SearchResultDbModel
                             {
                                 Rank = int.Parse(columns[0]),
                                 Url = columns[1],
                                 Type = columns[2],
-                                Date = DateTime.Parse(columns[3])
+                                Date = date
                             });
                         }
                     }
@@ -100,8 +102,23 @@ namespace ScraperWapp.Orchestrators
                     if (!searchResults.Any())
                     {
                         _logger.LogInformation("No results found");
+                        throw new Exception("No data found in CSV file");
                     }
-                    else{ await _searchResultRepository.AddData(searchResults);}
+                    else { 
+                        try 
+                        {
+                            await _searchResultRepository.AddData(searchResults);
+                        }                       
+                        catch(Exception ex)
+                        {
+                           throw new Exception("Error", ex);
+                        } 
+                    }
+                    
+                }
+                else
+                {
+                    throw new FileNotFoundException("CSV file not found", csvPath);
                 }
             }
         }

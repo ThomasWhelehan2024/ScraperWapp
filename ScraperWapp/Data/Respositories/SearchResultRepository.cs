@@ -5,18 +5,7 @@ using Serilog;
 
 namespace ScraperWapp.Data;
 
-public interface ISearchResultRepository
-{
-    Task<List<SearchResultDbModel>> GetByUrl(DateTime date);
-    Task<List<SearchResultDbModel>> GetByUrl(string url);
-    Task<List<TopRankModel>> GetTopRanks(int daysSince, int noOfResults);
-    Task AddData(IList<SearchResultDbModel> searchResults);
-    Task RemoveData();
-    Task<List<SearchResultDbModel>> GetByDate(DateTime date);
-    Task<List<SearchResultDbModel>> GetHistoricalData(string url);
-}
-
-public class SearchResultRepository : ISearchResultRepository
+public class SearchResultRepository 
 {
     private readonly AppDbContext _db;
 

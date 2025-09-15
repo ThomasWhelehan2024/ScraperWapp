@@ -15,30 +15,29 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Load configuration
         builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
+        // Configure Serilog
         Serilog.Debugging.SelfLog.Enable(Console.Error);
-
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .WriteTo.File("Logs/log-.json", rollingInterval: RollingInterval.Month,
                           restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
             .CreateLogger();
-
         builder.Host.UseSerilog(Log.Logger);
 
+        // Radzen services
         builder.Services.AddScoped<TooltipService>();
         builder.Services.AddScoped<DialogService>();
         builder.Services.AddScoped<NotificationService>();
         builder.Services.AddScoped<ContextMenuService>();
 
-        // Add Razor/Blazor services
+        // Razor/Blazor
         builder.Services.AddRazorPages();
         builder.Services.AddServerSideBlazor();
 
-        builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite("Data Source=TestDb.db"));
-
+        // HTTP client for DuckDuckGo
         builder.Services.AddHttpClient<DuckDuckGoClient>(client =>
         {
             client.DefaultRequestHeaders.UserAgent.ParseAdd(
@@ -55,23 +54,55 @@ public class Program
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         });
 
-        builder.Services.AddScoped<ISearchEngineClient,DuckDuckGoClient>();
+        // App services
+        builder.Services.AddScoped<ISearchEngineClient, DuckDuckGoClient>();
         builder.Services.AddScoped<IScraperService, ScraperService>();
         builder.Services.AddScoped<IAnalysisService, AnalysisService>();
         builder.Services.AddScoped<DdgOrchestrator>();
         builder.Services.AddScoped<SearchResultRepository>();
-        
+
+        // AppDbContext
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite("Data Source=TestDb.db"));
+
+        builder.WebHost.UseUrls("https://localhost:5000");
 
         var app = builder.Build();
 
-        _ = Task.Run(async () =>
+
+        // --- Ensure database exists and seed data ---
+        using (var scope = app.Services.CreateScope())
         {
-            using var scope = app.Services.CreateScope();
-            var orchestrator = scope.ServiceProvider.GetRequiredService<DdgOrchestrator>();
-            await orchestrator.SeedResultsAsync();
-        });
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbPath = db.Database.GetDbConnection().DataSource;
 
+            try
+            {
+                db.Database.EnsureCreated();
+                Console.WriteLine($"Using database: {dbPath}");
+            }
+            catch
+            {
+                Console.WriteLine("Database corrupted. Recreating...");
+                if (File.Exists(dbPath))
+                    File.Delete(dbPath);
 
+                db.Database.EnsureCreated();
+                Console.WriteLine($"New database created: {dbPath}");
+            }
+            try
+            {
+                var orchestrator = scope.ServiceProvider.GetRequiredService<DdgOrchestrator>();
+                await orchestrator.SeedResultsAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error during seeding:");
+                Console.WriteLine(ex);
+            }
+        }
+
+        // --- Configure middleware ---
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error");
@@ -84,6 +115,22 @@ public class Program
 
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
+
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "http://localhost:5000",
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+                Console.WriteLine("Could not launch browser automatically. Open http://localhost:5000 manually.");
+            }
+        });
 
         await app.RunAsync();
     }

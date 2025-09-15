@@ -51,4 +51,10 @@
     <AdditionalFiles Include="Shared\SurveyPrompt.razor" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="land_registry_searches_4week.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
